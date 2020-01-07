@@ -16,11 +16,19 @@ _global_script_class_icons={
 [application]
 
 config/name="Tool Assisted"
+run/main_scene="res://maps/test_map.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
 game_master="*res://global/game_master.gd"
+
+[display]
+
+window/size/width=720
+window/size/height=480
+window/size/resizable=false
+window/stretch/shrink=3.0
 
 [input]
 
