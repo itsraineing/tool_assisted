@@ -13,6 +13,8 @@ export (float) var in_air_acceleration = 20.0
 
 export (float) var gravity = 10000.0
 
+export (int) var idle_anim2_time = 180
+
 var is_jumping: bool = false
 var remaining_jump_time: int = max_jump_time
 
@@ -20,11 +22,10 @@ var last_dir: int = DIR_RIGHT
 
 var last_velocity: Vector2 = Vector2(0,0)
 
-var is_falling: bool = false
-var is_walking: bool = false
-
 var current_state: int = STATE_NONE
 var last_state: int = STATE_NONE
+
+var idle_time: int = 0
 
 func _ready():
 	set_physics_process(true)
@@ -63,17 +64,21 @@ func _physics_process(delta):
 	if is_on_floor():
 		if move_dir.x == 0:
 			current_state = STATE_IDLE
+			idle_time += 1
 		else:
 			current_state = STATE_WALKING
+			idle_time = 0
 	elif is_jumping:
 		current_state = STATE_JUMPING
+		idle_time = 0
 	else:
 		current_state = STATE_FALLING
+		idle_time = 0
 	
 	if current_state != last_state:
 		match current_state:
 			STATE_IDLE:
-				$AnimationPlayer.play("idle", -1, 0.33)
+				$AnimationPlayer.play("idle")
 			STATE_WALKING:
 				$AnimationPlayer.play("idle", -1, 3)
 			STATE_JUMPING:
@@ -82,12 +87,13 @@ func _physics_process(delta):
 			STATE_FALLING:
 				$AnimationPlayer.stop()
 				$Sprite.frame = 3
+	elif idle_time >= idle_anim2_time:
+		idle_time = 0
+		$AnimationPlayer.play("idle2")
 	
 	# set up for next frame
 	last_velocity = velocity_change
 	last_state = current_state
-	
-	print(is_on_floor())
 
 func get_move_input():
 	var dir = Vector2(0,0)
