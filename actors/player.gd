@@ -62,7 +62,7 @@ func handle_frame(delta):
 			velocity_change.x = last_velocity.x / 1.4
 		
 		# jump
-		if Input.is_action_pressed("jump") and remaining_jump_time > 0:
+		if Input.is_action_pressed("jump") and remaining_jump_time > 0 and (is_on_floor() or is_jumping):
 			velocity_change.y -= jump_power * (remaining_jump_time / 10.0)
 			remaining_jump_time -= 1
 			is_jumping = true
