@@ -7,16 +7,16 @@ enum {STATE_IDLE, STATE_WALKING, STATE_JUMPING, STATE_FALLING, STATE_ATTACKING, 
 
 export (float) var walk_speed = 8000.0
 export (float) var walk_acceleration = 1200.0
-export (float) var jump_power = 10.0
-export (float) var max_jump_time = 15.0
+export (float) var jump_power = 5000
+export (int) var max_jump_time = 30
 export (float) var in_air_acceleration = 20.0
 
-export (float) var gravity = 10000.0
+export (float) var gravity = 8000.0
 
 export (int) var idle_anim2_time = 180
 
 var is_jumping: bool = false
-var remaining_jump_time: int = max_jump_time
+var remaining_jump_time: int = 0
 
 var last_dir: int = DIR_RIGHT
 
@@ -35,6 +35,7 @@ func _physics_process(delta):
 	var velocity_change: Vector2 = Vector2(0,0)
 	var velocity: Vector2
 	
+	# left/right move
 	if move_dir.x != 0:
 		if move_dir.x == DIR_LEFT:
 			if last_velocity.x > -walk_speed:
@@ -49,11 +50,21 @@ func _physics_process(delta):
 	else:
 		velocity_change.x = last_velocity.x / 1.4
 	
-	velocity_change.y += gravity
+	# jump
+	if Input.is_action_pressed("jump") and remaining_jump_time > 0:
+		velocity_change.y -= jump_power * (remaining_jump_time / 10.0)
+		remaining_jump_time -= 1
+		is_jumping = true
+	else:
+		velocity_change.y += gravity
+		is_jumping = false
 	
+	# move player
 	velocity = velocity_change * delta
-	
 	velocity = move_and_slide(velocity, UP)
+	
+	if is_on_floor():
+		remaining_jump_time = max_jump_time
 	
 	# animation
 	if last_dir == DIR_LEFT:
