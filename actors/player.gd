@@ -18,6 +18,9 @@ export (int) var idle_anim2_time = 180
 
 onready var game_master: Node = get_node("/root/game_master")
 
+var enable_control: bool = true
+var is_alive: bool = true
+
 var is_jumping: bool = false
 var remaining_jump_time: int = 0
 
@@ -36,83 +39,85 @@ func _ready():
 func _physics_process(delta):
 	if !game_master.is_paused:
 		handle_frame(delta)
-	pass
 
 func handle_frame(delta):
-	var move_dir: Vector2 = get_move_input().normalized()
-	var velocity_change: Vector2 = Vector2(0,0)
-	var velocity: Vector2
-	
-	# left/right move
-	if move_dir.x != 0:
-		if move_dir.x == DIR_LEFT:
-			if last_velocity.x > -walk_speed:
-				velocity_change.x = last_velocity.x - walk_acceleration
-			else:
-				velocity_change.x = -walk_speed
-		elif move_dir.x == DIR_RIGHT:
-			if last_velocity.x < walk_speed:
-				velocity_change.x = last_velocity.x + walk_acceleration
-			else:
-				velocity_change.x = walk_speed
-	else:
-		velocity_change.x = last_velocity.x / 1.4
-	
-	# jump
-	if Input.is_action_pressed("jump") and remaining_jump_time > 0:
-		velocity_change.y -= jump_power * (remaining_jump_time / 10.0)
-		remaining_jump_time -= 1
-		is_jumping = true
-	else:
-		velocity_change.y += min(last_velocity.y + gravity_acceleration, gravity)
-		is_jumping = false
-	
-	# move player
-	velocity = velocity_change * delta
-	velocity = move_and_slide(velocity, UP)
-	
-	if is_on_floor():
-		remaining_jump_time = max_jump_time
-	
-	# animation
-	if last_dir == DIR_LEFT:
-		$Sprite.flip_h = true
-	else:
-		$Sprite.flip_h = false
-	
-	if is_on_floor():
-		if move_dir.x == 0:
-			current_state = STATE_IDLE
-			idle_time += 1
+	if is_alive and enable_control:
+		var move_dir: Vector2 = get_move_input().normalized()
+		var velocity_change: Vector2 = Vector2(0,0)
+		var velocity: Vector2
+		
+		# left/right move
+		if move_dir.x != 0:
+			if move_dir.x == DIR_LEFT:
+				if last_velocity.x > -walk_speed:
+					velocity_change.x = last_velocity.x - walk_acceleration
+				else:
+					velocity_change.x = -walk_speed
+			elif move_dir.x == DIR_RIGHT:
+				if last_velocity.x < walk_speed:
+					velocity_change.x = last_velocity.x + walk_acceleration
+				else:
+					velocity_change.x = walk_speed
 		else:
-			current_state = STATE_WALKING
+			velocity_change.x = last_velocity.x / 1.4
+		
+		# jump
+		if Input.is_action_pressed("jump") and remaining_jump_time > 0:
+			velocity_change.y -= jump_power * (remaining_jump_time / 10.0)
+			remaining_jump_time -= 1
+			is_jumping = true
+		else:
+			if last_velocity.y < 0:
+				last_velocity.y /= 1.5
+			velocity_change.y += min(last_velocity.y + gravity_acceleration, gravity)
+			is_jumping = false
+		
+		# move player
+		velocity = velocity_change * delta
+		velocity = move_and_slide(velocity, UP)
+		
+		if is_on_floor():
+			remaining_jump_time = max_jump_time
+		
+		# animation
+		if last_dir == DIR_LEFT:
+			$Sprite.flip_h = true
+		else:
+			$Sprite.flip_h = false
+		
+		if is_on_floor():
+			if move_dir.x == 0:
+				current_state = STATE_IDLE
+				idle_time += 1
+			else:
+				current_state = STATE_WALKING
+				idle_time = 0
+		elif is_jumping:
+			current_state = STATE_JUMPING
 			idle_time = 0
-	elif is_jumping:
-		current_state = STATE_JUMPING
-		idle_time = 0
-	else:
-		current_state = STATE_FALLING
-		idle_time = 0
-	
-	if current_state != last_state:
-		match current_state:
-			STATE_IDLE:
-				$AnimationPlayer.play("idle")
-			STATE_WALKING:
-				$AnimationPlayer.play("idle", -1, 3)
-			STATE_JUMPING:
-				$AnimationPlayer.stop()
-				$Sprite.frame = 2
-			STATE_FALLING:
-				$AnimationPlayer.stop()
-				$Sprite.frame = 3
-	elif idle_time >= idle_anim2_time:
-		idle_time = 0
-		$AnimationPlayer.play("idle2")
-	
-	# set up for next frame
-	last_velocity = velocity / delta
-	last_state = current_state
+		else:
+			current_state = STATE_FALLING
+			idle_time = 0
+		
+		if current_state != last_state:
+			match current_state:
+				STATE_IDLE:
+					$AnimationPlayer.play("idle")
+				STATE_WALKING:
+					$AnimationPlayer.play("idle", -1, 3)
+				STATE_JUMPING:
+					$AnimationPlayer.stop()
+					$Sprite.frame = 2
+				STATE_FALLING:
+					$AnimationPlayer.stop()
+					$Sprite.frame = 3
+		elif idle_time >= idle_anim2_time:
+			idle_time = 0
+			$AnimationPlayer.play("idle2")
+		
+		# set up for next frame
+		last_velocity = velocity / delta
+		last_state = current_state
 
 func get_move_input():
 	var dir = Vector2(0,0)
