@@ -11,9 +11,12 @@ export (float) var jump_power = 5000
 export (int) var max_jump_time = 30
 export (float) var in_air_acceleration = 20.0
 
-export (float) var gravity = 8000.0
+export (float) var gravity = 20000.0
+export (float) var gravity_acceleration = 500.0
 
 export (int) var idle_anim2_time = 180
+
+onready var game_master: Node = get_node("/root/game_master")
 
 var is_jumping: bool = false
 var remaining_jump_time: int = 0
@@ -31,6 +34,11 @@ func _ready():
 	set_physics_process(true)
 
 func _physics_process(delta):
+	if !game_master.is_paused:
+		handle_frame(delta)
+	pass
+
+func handle_frame(delta):
 	var move_dir: Vector2 = get_move_input().normalized()
 	var velocity_change: Vector2 = Vector2(0,0)
 	var velocity: Vector2
@@ -56,7 +64,7 @@ func _physics_process(delta):
 		remaining_jump_time -= 1
 		is_jumping = true
 	else:
-		velocity_change.y += gravity
+		velocity_change.y += min(last_velocity.y + gravity_acceleration, gravity)
 		is_jumping = false
 	
 	# move player
@@ -103,7 +111,7 @@ func _physics_process(delta):
 		$AnimationPlayer.play("idle2")
 	
 	# set up for next frame
-	last_velocity = velocity_change
+	last_velocity = velocity / delta
 	last_state = current_state
 
 func get_move_input():
