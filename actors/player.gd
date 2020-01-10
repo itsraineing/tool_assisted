@@ -35,10 +35,12 @@ var idle_time: int = 0
 
 func _ready():
 	set_physics_process(true)
+	game_master.register_actor(self)
 
 func _physics_process(delta):
-	if !game_master.is_paused:
-		handle_frame(delta)
+	#if !game_master.is_paused:
+	#	handle_frame(delta)
+	pass
 
 func handle_frame(delta):
 	if is_alive and enable_control:
