@@ -16,3 +16,7 @@ shape = SubResource( 1 )
 texture = ExtResource( 2 )
 hframes = 9
 frame = 7
+
+[node name="Camera2D" type="Camera2D" parent="."]
+offset = Vector2( 0, -20 )
+current = true

@@ -19,6 +19,7 @@ const ANIM_DIE_FRAMETIME: int = 15
 const ANIM_LOOK_ACTIVATE_FRAMES: int = 240
 
 enum {DIR_LEFT = -1, DIR_RIGHT = 1}
+enum {KEY_LEFT = 1, KEY_RIGHT = 2, KEY_UP = 4, KEY_DOWN = 8, KEY_JUMP = 16}
 enum {STATE_IDLE, STATE_WALKING, STATE_JUMPING, STATE_FALLING, STATE_ATTACKING, STATE_HIT, STATE_DEAD, STATE_NONE = -1}
 enum {FRAME_IDLE1, FRAME_IDLE2, FRAME_JUMP, FRAME_FALL, FRAME_LOOK1, FRAME_LOOK2, FRAME_LOOK3, FRAME_DIE, FRAME_NONE}
 enum {ANIM_IDLE = 0, ANIM_RUN = 621, ANIM_JUMP = 2, ANIM_FALL = 3, ANIM_LOOK = 4, ANIM_DIE = 7}
@@ -61,9 +62,18 @@ func _physics_process(delta):
 
 func handle_frame(delta):
 	if is_alive and enable_control:
-		var move_dir: Vector2 = get_move_input().normalized()
+		var input: int = 0
+		var move_dir: Vector2 = Vector2(0,0)
 		var velocity_change: Vector2 = Vector2(0,0)
 		var velocity: Vector2
+		
+		if game_master.get_isreplay():
+			input = game_master.get_currentframeinput()
+		else:
+			input = get_input()
+			game_master.add_playerinput(input)
+		
+		move_dir = get_move_input(input).normalized()
 		
 		# left/right move
 		if move_dir.x != 0:
@@ -81,7 +91,7 @@ func handle_frame(delta):
 			velocity_change.x = last_velocity.x / 1.4
 		
 		# jump
-		if Input.is_action_pressed("jump") and remaining_jump_time > 0 and (is_on_floor() or is_jumping):
+		if input & KEY_JUMP and remaining_jump_time > 0 and (is_on_floor() or is_jumping):
 			velocity_change.y -= jump_power * (remaining_jump_time / 10.0)
 			remaining_jump_time -= 1
 			is_jumping = true
@@ -136,11 +146,23 @@ func handle_frame(delta):
 			current_anim = ANIM_LOOK
 			current_anim_frame = 0
 		
-		animate()
-		
 		# set up for next frame
 		last_velocity = velocity / delta
 		last_state = current_state
+	else:
+		if last_state != current_state:
+			current_anim = ANIM_DIE
+			current_anim_frame = 0
+			idle_time = 0
+		else:
+			idle_time += 1
+		
+		last_state = current_state
+		
+		if idle_time > 180:
+			get_parent().reset()
+	
+	animate()
 
 func animate():
 	match current_anim:
@@ -189,17 +211,86 @@ func animate():
 	
 	current_anim_frame += 1
 
-func get_move_input():
+func get_move_input(input: int):
 	var dir = Vector2(0,0)
 	
-	if Input.is_action_pressed("left"):
-		if Input.is_action_pressed("right"):
+	if input & KEY_LEFT:
+		if input & KEY_RIGHT:
 			dir.x = -last_dir
 		else:
 			dir.x = DIR_LEFT
 			last_dir = DIR_LEFT
-	elif Input.is_action_pressed("right"):
+	elif input & KEY_RIGHT:
 		dir.x = DIR_RIGHT
 		last_dir = DIR_RIGHT
 	
 	return dir
+
+func get_input():
+	var input: int = 0
+	
+	if Input.is_action_pressed("left"):
+		input = input | KEY_LEFT
+	if Input.is_action_pressed("right"):
+		input = input | KEY_RIGHT
+	if Input.is_action_pressed("up"):
+		input = input | KEY_UP
+	if Input.is_action_pressed("down"):
+		input = input | KEY_DOWN
+	if Input.is_action_pressed("jump"):
+		input = input | KEY_JUMP
+	
+	return input
+
+func _on_beam_collide(body):
+	if body == self and is_alive:
+		print("FUCK")
+		is_alive = false
+		current_state = STATE_DEAD
+		enable_control = false
+
+func get_status():
+	var data = {}
+	data["type"] = "player"
+	
+	data["position"] = self.position
+	data["enable_control"] = enable_control
+	data["is_alive"] = is_alive
+	data["is_jumping"] = is_jumping
+	data["remaining_jump_time"] = remaining_jump_time
+	data["last_dir"] = last_dir
+	data["last_velocity"] = last_velocity
+	data["current_state"] = current_state
+	data["last_state"] = last_state
+	data["idle_time"] = idle_time
+	data["current_anim"] = current_anim
+	data["current_anim_frame"] = current_anim_frame
+	
+	return data
+
+func load_status(s: Dictionary):
+	self.position = s["position"]
+	enable_control = s["enable_control"]
+	is_alive = s["is_alive"]
+	is_jumping = s["is_jumping"]
+	remaining_jump_time = s["remaining_jump_time"]
+	last_dir = s["last_dir"]
+	last_velocity = s["last_velocity"]
+	current_state = s["current_state"]
+	last_state = s["last_state"]
+	idle_time = s["idle_time"]
+	current_anim = s["current_anim"]
+	current_anim_frame = s["current_anim_frame"]
+
+func reset_status():
+	enable_control = true
+	is_alive = true
+	is_jumping = false
+	remaining_jump_time = 0
+	last_dir = DIR_RIGHT
+	last_velocity = Vector2(0,0)
+	current_state = STATE_NONE
+	last_state = STATE_NONE
+	idle_time = 0
+	current_anim = ANIM_IDLE
+	current_anim_frame = 0
