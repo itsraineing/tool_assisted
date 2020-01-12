@@ -61,13 +61,18 @@ func _physics_process(delta):
 	pass
 
 func handle_frame(delta):
+	var tmpinput = get_input()
+	if tmpinput != 0:
+		game_master.is_replay = false
+		game_master.clear_playerinput_after_now()
+	
 	if is_alive and enable_control:
 		var input: int = 0
 		var move_dir: Vector2 = Vector2(0,0)
 		var velocity_change: Vector2 = Vector2(0,0)
 		var velocity: Vector2
 		
-		if game_master.get_isreplay():
+		if game_master.is_replay:
 			input = game_master.get_currentframeinput()
 		else:
 			input = get_input()
@@ -244,7 +249,6 @@ func get_input():
 
 func _on_beam_collide(body):
 	if body == self and is_alive:
-		print("FUCK")
 		is_alive = false
 		current_state = STATE_DEAD
 		enable_control = false
