@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="Tool Assisted"
-run/main_scene="res://base.tscn"
+run/main_scene="res://hud/main_menu.tscn"
 config/icon="res://icon.png"
 
 [autoload]
