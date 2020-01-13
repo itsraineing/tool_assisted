@@ -5,7 +5,7 @@ const DELTA: float = 1.0 / 60.0
 var current_time: int = 0
 var recorded_time: int = 0
 var is_paused: bool = false
-var ingame: bool = true
+var ingame: bool = false
 var is_replay: bool = false
 var pause_menu_open: bool = false
 
@@ -126,10 +126,21 @@ func get_isreplay():
 	return is_replay
 
 func get_currentframeinput():
-	return player_inputs[current_time]
+	if current_time >= player_inputs.size():
+		return 0
+	else:
+		return player_inputs[current_time]
 
 func get_savestate_frame(slot: int):
 	if save_states[slot] != null:
 		return save_states[slot]["current_time"]
 	else:
 		return 0
+
+func reset():
+	current_time = 0
+	recorded_time = 0
+	player_inputs.resize(0)
+	current_level.reset()
+	ingame = true
+	is_paused = false

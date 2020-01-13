@@ -1,12 +1,13 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=16 format=2]
 
 [ext_resource path="res://hud/bg.png" type="Texture" id=1]
 [ext_resource path="res://hud/playpause_shaded.png" type="Texture" id=2]
-[ext_resource path="res://maps/test_map.tscn" type="PackedScene" id=3]
+[ext_resource path="res://maps/level1.tscn" type="PackedScene" id=3]
 [ext_resource path="res://712_serif.ttf" type="DynamicFontData" id=4]
 [ext_resource path="res://hud/pause_bg.png" type="Texture" id=5]
 [ext_resource path="res://base.gd" type="Script" id=6]
 [ext_resource path="res://hud/savestate_select.png" type="Texture" id=7]
+[ext_resource path="res://hud/win_bg.png" type="Texture" id=8]
 
 [sub_resource type="DynamicFontData" id=1]
 antialiased = false
@@ -19,6 +20,29 @@ font_data = SubResource( 1 )
 font_data = ExtResource( 4 )
 
 [sub_resource type="Animation" id=4]
+resource_name = "blink"
+loop = true
+tracks/0/type = "value"
+tracks/0/path = NodePath("select:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 1, 1 ),
+"update": 1,
+"values": [ 0, 1 ]
+}
+
+[sub_resource type="DynamicFont" id=5]
+size = 32
+font_data = ExtResource( 4 )
+
+[sub_resource type="DynamicFont" id=6]
+font_data = ExtResource( 4 )
+
+[sub_resource type="Animation" id=7]
 resource_name = "blink"
 loop = true
 tracks/0/type = "value"
@@ -60,11 +84,10 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="test_map" parent="." instance=ExtResource( 3 )]
-
 [node name="pause_layer" type="CanvasLayer" parent="."]
 
 [node name="pause_menu" type="Node2D" parent="pause_layer"]
+visible = false
 
 [node name="bg" type="Sprite" parent="pause_layer/pause_menu"]
 position = Vector2( 120, 88 )
@@ -126,3 +149,81 @@ frame = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="pause_layer/pause_menu"]
 anims/blink = SubResource( 4 )
+
+[node name="win_screen" type="Node2D" parent="pause_layer"]
+
+[node name="bg" type="Sprite" parent="pause_layer/win_screen"]
+position = Vector2( 120, 80 )
+texture = ExtResource( 8 )
+
+[node name="win_text" type="Label" parent="pause_layer/win_screen"]
+margin_left = 59.0
+margin_top = 13.0
+margin_right = 187.0
+margin_bottom = 37.0
+custom_fonts/font = SubResource( 5 )
+text = "you win!"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="frames_label" type="Label" parent="pause_layer/win_screen"]
+margin_left = 39.0
+margin_top = 59.0
+margin_right = 143.0
+margin_bottom = 73.0
+custom_fonts/font = SubResource( 6 )
+text = "frames taken:"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="par_label" type="Label" parent="pause_layer/win_screen"]
+margin_left = 39.0
+margin_top = 84.0
+margin_right = 143.0
+margin_bottom = 98.0
+custom_fonts/font = SubResource( 6 )
+text = "par: 820"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="menu_label" type="Label" parent="pause_layer/win_screen"]
+margin_left = 61.0
+margin_top = 128.0
+margin_right = 95.0
+margin_bottom = 142.0
+custom_fonts/font = SubResource( 6 )
+text = "menu"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="menu_label2" type="Label" parent="pause_layer/win_screen"]
+margin_left = 134.0
+margin_top = 128.0
+margin_right = 174.0
+margin_bottom = 142.0
+custom_fonts/font = SubResource( 6 )
+text = "reset"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="select" type="Sprite" parent="pause_layer/win_screen"]
+position = Vector2( 77, 135 )
+texture = ExtResource( 7 )
+hframes = 2
+frame = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="pause_layer/win_screen"]
+anims/blink = SubResource( 7 )
+
+[node name="level1" parent="." instance=ExtResource( 3 )]
+
+[node name="player" parent="level1" index="1"]
+position = Vector2( 0, 37 )
+[connection signal="body_entered" from="level1/exit_trigger" to="." method="_on_exit_trigger_body_entered"]
+
+[editable path="level1"]
